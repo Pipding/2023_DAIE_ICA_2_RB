@@ -51,4 +51,12 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-/.quarto/
+*/.quarto/
+*/index_files/
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+
+_site/
+index_cache/
