@@ -1,0 +1,62 @@
+---
+title: "2023_DAIE_ICA_2_RB"
+format: dashboard
+server: shiny
+---
+
+```{r}
+#| context: server-start
+
+# See https://quarto.org/docs/interactive/shiny/execution.html#context-server-start
+
+# In here we could add code (e.g., obtain a connection to a DB, read a CSV, download a ZIP from a remote source) that is run once and shared across multiple open sessions (i.e. multiple browser views of these pages that the user may open in Chrome/Edge)
+
+# library(DBI)
+# library("RSQLite")
+
+# con <- dbConnect(drv=RSQLite::SQLite(), dbname="ICA_2023.sqlite")
+
+```
+
+
+# Data View
+
+```{r}
+#| title: customers
+
+# Create a table with the DT package 
+datatable(head(customers))
+
+```
+
+```{r}
+#| title: projects
+
+datatable(head(projects))
+
+```
+
+```{r}
+#| title: developers
+
+datatable(head(developers))
+
+```
+
+```{r}
+#| title: assets
+
+datatable(head(assets))
+
+```
+
+# Plot View
+
+```{r}
+#| title: MT Cars Dataset
+
+# Create a table with the DT package 
+datatable(head(mtcars))
+
+```
+
