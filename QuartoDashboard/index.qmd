@@ -11,13 +11,19 @@ server: shiny
 
 # In here we could add code (e.g., obtain a connection to a DB, read a CSV, download a ZIP from a remote source) that is run once and shared across multiple open sessions (i.e. multiple browser views of these pages that the user may open in Chrome/Edge)
 
-# library(DBI)
-# library("RSQLite")
-
-# con <- dbConnect(drv=RSQLite::SQLite(), dbname="ICA_2023.sqlite")
-
 ```
 
+```{r}
+#| context: setup
+library(RSQLite)
+library(vistime)
+library(plotly)
+
+con <- dbConnect(drv=RSQLite::SQLite(), dbname="ICA_2023.sqlite")
+
+
+projects <- dbGetQuery(con,'SELECT * FROM Projects;')
+```
 
 # Data View
 
@@ -52,11 +58,80 @@ datatable(head(assets))
 
 # Plot View
 
-```{r}
-#| title: MT Cars Dataset
+<!--
+Plot 1: 
+Project timelines
+Field 1: Start date
+Field 2: End date
+-->
 
-# Create a table with the DT package 
-datatable(head(mtcars))
+```{r}
+#| content: card-sidebar
+
+# Note: I would've liked to use a dateRangeInput but at time of writing they're
+# bugged and don't display correctly
+
+dateInput(
+  'projectsStartLimit',
+  'Min. project start date',
+  value = min(as.Date(projects$StartDate)),
+  min = min(as.Date(projects$StartDate)),
+  max = max(as.Date(projects$StartDate)),
+  format = "yyyy-mm-dd",
+  startview = "month",
+  weekstart = 0,
+  language = "en",
+  width = NULL,
+  autoclose = TRUE,
+  datesdisabled = NULL,
+  daysofweekdisabled = NULL
+)
+
+dateInput(
+  'projectsEndLimit',
+  'Max. project end date',
+  value = max(na.omit(as.Date(projects$EndDate))),
+  min = min(na.omit(as.Date(projects$EndDate))),
+  max = max(na.omit(as.Date(projects$EndDate))),
+  format = "yyyy-mm-dd",
+  startview = "month",
+  weekstart = 0,
+  language = "en",
+  width = NULL,
+  autoclose = TRUE,
+  datesdisabled = NULL,
+  daysofweekdisabled = NULL
+)
 
 ```
 
+```{r}
+#| title: Project timelines
+
+plotlyOutput("projectTimelines")
+```
+
+```{r}
+#| context: server
+
+filtered_projects <- reactive({
+  projects %>%
+    filter(StartDate >= input$projectsStartLimit) %>%
+    filter(EndDate <= input$projectsEndLimit)
+})
+
+
+timeline_data <- reactive({
+  data.frame(event = filtered_projects()$ProjectName,
+             start = as.Date(filtered_projects()$StartDate), 
+             end   = as.Date(filtered_projects()$EndDate),
+             group = "Projects")
+})
+
+output$projectTimelines <- renderPlotly({
+  vistime(
+    timeline_data(),
+    optimize_y = FALSE
+    )
+})
+```

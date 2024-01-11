@@ -7,6 +7,19 @@ if (!requireNamespace("RSQLite"))
   install.packages("RSQLite")
 library(RSQLite)
 
+# Package for showing timelines
+if (!requireNamespace("vistime")) 
+  install.packages("vistime")
+library(vistime)
+
+if (!requireNamespace("quarto")) 
+  install.packages("quarto")
+library(quarto)
+
+if (!requireNamespace("plotly")) 
+  install.packages("plotly")
+library(plotly)
+
 con <- dbConnect(drv=RSQLite::SQLite(), dbname="ICA_2023.sqlite")
 
 customers <- dbGetQuery(con,'SELECT * FROM Customers;')
