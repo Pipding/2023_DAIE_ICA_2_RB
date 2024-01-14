@@ -2,6 +2,8 @@
 title: "2023_DAIE_ICA_2_RB"
 format: dashboard
 server: shiny
+theme:
+  - custom.scss
 ---
 
 ```{r}
@@ -68,39 +70,33 @@ Field 2: End date
 ```{r}
 #| content: card-sidebar
 
-# Note: I would've liked to use a dateRangeInput but at time of writing they're
-# bugged and don't display correctly
-
-dateInput(
-  'projectsStartLimit',
-  'Min. project start date',
-  value = min(as.Date(projects$StartDate)),
-  min = min(as.Date(projects$StartDate)),
-  max = max(as.Date(projects$StartDate)),
+# These dateRangeInputs control the 
+dateRangeInput(
+  'projectStartRange',
+  'Project start date range',
+  start = min(projects$StartDate),
+  end = max(projects$StartDate),
+  min = min(projects$StartDate),
+  max = max(projects$StartDate),
   format = "yyyy-mm-dd",
   startview = "month",
   weekstart = 0,
   language = "en",
-  width = NULL,
-  autoclose = TRUE,
-  datesdisabled = NULL,
-  daysofweekdisabled = NULL
+  separator = " to "
 )
 
-dateInput(
-  'projectsEndLimit',
-  'Max. project end date',
-  value = max(na.omit(as.Date(projects$EndDate))),
-  min = min(na.omit(as.Date(projects$EndDate))),
-  max = max(na.omit(as.Date(projects$EndDate))),
+dateRangeInput(
+  'projectEndRange',
+  'Project end date range',
+  start = min(projects$EndDate),
+  end = max(projects$EndDate),
+  min = min(projects$EndDate),
+  max = max(projects$EndDate),
   format = "yyyy-mm-dd",
   startview = "month",
   weekstart = 0,
   language = "en",
-  width = NULL,
-  autoclose = TRUE,
-  datesdisabled = NULL,
-  daysofweekdisabled = NULL
+  separator = " to "
 )
 
 ```
@@ -111,13 +107,20 @@ dateInput(
 plotlyOutput("projectTimelines")
 ```
 
+
+
+
+
+
 ```{r}
 #| context: server
 
 filtered_projects <- reactive({
   projects %>%
-    filter(StartDate >= input$projectsStartLimit) %>%
-    filter(EndDate <= input$projectsEndLimit)
+    filter(StartDate >= input$projectStartRange[1]) %>%
+    filter(StartDate <= input$projectStartRange[2]) %>%
+    filter(EndDate >= input$projectEndRange[1]) %>%
+    filter(EndDate <= input$projectEndRange[2])
 })
 
 

@@ -1,0 +1,11 @@
+/* This is a magic comment. Quarto will refuse to render without it.  */
+/*-- scss:rules --*/
+
+/* This fixes a bug where dateRangeInput is rendered too thin to display its contents */
+.input-group>.form-control, .input-group>.form-select, .input-group>.form-floating {
+  width: 100%;
+}
+
+.bslib-sidebar-layout>.sidebar .shiny-input-container {
+  width: 90%;
+}
