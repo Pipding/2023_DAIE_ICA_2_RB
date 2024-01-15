@@ -67,7 +67,7 @@ Field 1: Start date
 Field 2: End date
 -->
 
-```{r}
+```{r Date range inputs for project timelines plot}
 #| content: card-sidebar
 
 # These dateRangeInputs control the 
@@ -101,7 +101,7 @@ dateRangeInput(
 
 ```
 
-```{r}
+```{r Plot project timelines}
 #| title: Project timelines
 
 plotlyOutput("projectTimelines")
@@ -110,12 +110,13 @@ plotlyOutput("projectTimelines")
 
 
 
-
-
 ```{r}
 #| context: server
 
-filtered_projects <- reactive({
+##################################################
+# Timeline view
+##################################################
+timelineFilteredProjects <- reactive({
   projects %>%
     filter(StartDate >= input$projectStartRange[1]) %>%
     filter(StartDate <= input$projectStartRange[2]) %>%
@@ -124,17 +125,21 @@ filtered_projects <- reactive({
 })
 
 
-timeline_data <- reactive({
-  data.frame(event = filtered_projects()$ProjectName,
-             start = as.Date(filtered_projects()$StartDate), 
-             end   = as.Date(filtered_projects()$EndDate),
+timelineData <- reactive({
+  data.frame(event = timelineFilteredProjects()$ProjectName,
+             start = as.Date(timelineFilteredProjects()$StartDate), 
+             end   = as.Date(timelineFilteredProjects()$EndDate),
              group = "Projects")
 })
 
 output$projectTimelines <- renderPlotly({
   vistime(
-    timeline_data(),
+    timelineData(),
     optimize_y = FALSE
     )
 })
+
+##################################################
+# Budget view
+##################################################
 ```
