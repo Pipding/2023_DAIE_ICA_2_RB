@@ -143,7 +143,7 @@ dateRangeInput(
 ```
 
 ```{r Total project spend mapped by customer city}
-#| title: Total project budget by city
+#| title: Total project budget by location
 
 # Based on https://www.r-bloggers.com/2017/08/tidyverse-practice-mapping-large-european-cities/
 map.europe <- map_data("world")
@@ -173,7 +173,7 @@ theme.maptheeme <-
 p <- ggplot() +
   geom_polygon(
     data = map.europe,
-    aes(x = long, y = lat, group = group),
+    aes(x = long, y = lat, group = group, text = " "),
     fill = "#DEDEDE",
     colour = "#818181",
     size = .15
@@ -182,7 +182,7 @@ p <- ggplot() +
     data = d,
     aes(x = lon, y = lat, size = Budget, name = City),
     color = "red",
-    alpha = .3
+    alpha = .6
   ) +
   coord_cartesian(xlim = c(-30,50), ylim = c(32,70)) +
   theme.maptheeme
