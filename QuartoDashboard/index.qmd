@@ -112,18 +112,13 @@ plotlyOutput("projectTimelines")
 ```{r Inputs for the geographic spend map}
 #| content: card-sidebar
 
-dateRangeInput(
-  'projectStartRange',
-  'Project start date range',
-  start = min(projects$StartDate),
-  end = max(projects$StartDate),
-  min = min(projects$StartDate),
-  max = max(projects$StartDate),
-  format = "yyyy-mm-dd",
-  startview = "month",
-  weekstart = 0,
-  language = "en",
-  separator = " to "
+checkboxGroupInput(
+  "countrySelect",
+  "Countries",
+  choices = c("UK", "Spain"),
+  selected = "UK",
+  inline = FALSE,
+  width = '100%'
 )
 
 dateRangeInput(
