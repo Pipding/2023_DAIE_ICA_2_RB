@@ -109,6 +109,39 @@ plotlyOutput("projectTimelines")
 
 # Geographic spend
 
+```{r Inputs for the geographic spend map}
+#| content: card-sidebar
+
+dateRangeInput(
+  'projectStartRange',
+  'Project start date range',
+  start = min(projects$StartDate),
+  end = max(projects$StartDate),
+  min = min(projects$StartDate),
+  max = max(projects$StartDate),
+  format = "yyyy-mm-dd",
+  startview = "month",
+  weekstart = 0,
+  language = "en",
+  separator = " to "
+)
+
+dateRangeInput(
+  'projectEndRange',
+  'Project end date range',
+  start = min(projects$EndDate),
+  end = max(projects$EndDate),
+  min = min(projects$EndDate),
+  max = max(projects$EndDate),
+  format = "yyyy-mm-dd",
+  startview = "month",
+  weekstart = 0,
+  language = "en",
+  separator = " to "
+)
+
+```
+
 ```{r Total project spend mapped by customer city}
 #| title: Total project budget by city
 
@@ -117,15 +150,15 @@ map.europe <- map_data("world")
 df.euro_cities <- city_coords
 
 # Need to use fuzzy join because Rome is called Roma in the city_coords dataset
-d <- fuzzy_left_join(customerCityBudgets, df.euro_cities,
-                      by = c("City" = "city"),
-                      match_fun = list(function(x,y) stringdist(tolower(x),tolower(y)) < 2)
-                      )
+d <- fuzzy_left_join(
+  customerCityBudgets,
+  df.euro_cities,
+  by = c("City" = "city"),
+  match_fun = list(function(x,y) stringdist(tolower(x),tolower(y)) < 2)
+  )
 
 theme.maptheeme <-
   theme(text = element_text(family = "Gill Sans", color = "#444444")) +
-  theme(plot.title = element_text(size = 32)) +
-  theme(plot.subtitle = element_text(size = 16)) +
   theme(panel.grid = element_blank()) +
   theme(axis.text = element_blank()) +
   theme(axis.ticks = element_blank()) +
@@ -145,20 +178,17 @@ p <- ggplot() +
     colour = "#818181",
     size = .15
   ) +
-  geom_point(data = d, aes(x = lon, y = lat, size = Budget, name = City), color = "red", alpha = .3) +
-  coord_cartesian(xlim = c(-9,45), ylim = c(32,70)) +
-  scale_size_continuous(range = c(.7,15), breaks = c(1100000, 4000000, 8000000, 12000000), name = "Population", labels = scales::comma_format()) +
+  geom_point(
+    data = d,
+    aes(x = lon, y = lat, size = Budget, name = City),
+    color = "red",
+    alpha = .3
+  ) +
+  coord_cartesian(xlim = c(-9,70), ylim = c(32,70)) +
   theme.maptheeme
 
 
 ggplotly(p)
-
-#p <- ggplot() +
-  #geom_polygon(data = map.europe, aes(x = long, y = lat, group = group)) +
-  #geom_point(data = d, aes(x = lon, y = lat, size = Budget, name = City), color = "red", alpha = .9) +
-  #coord_cartesian(xlim = c(-9,45), ylim = c(32,70))
-
-#style(ggplotly(p),visible="True", traces = 0)
 ```
 
 
