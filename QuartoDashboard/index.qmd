@@ -184,7 +184,7 @@ p <- ggplot() +
     color = "red",
     alpha = .3
   ) +
-  coord_cartesian(xlim = c(-9,70), ylim = c(32,70)) +
+  coord_cartesian(xlim = c(-30,50), ylim = c(32,70)) +
   theme.maptheeme
 
 
