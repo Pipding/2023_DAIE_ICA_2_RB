@@ -35,9 +35,11 @@ library(europop)
 library(fuzzyjoin)
 library(stringdist)
 
+# Load in data for use in rendering a map of the world & data about European cities
 map.europe <- map_data("world")
 df.euro_cities <- city_coords
 
+# Create a dataframe for per-city budget
 # Need to use fuzzy join because Rome is called Roma in the city_coords dataset
 df.geo_budget <- fuzzy_left_join(
   customerCityBudgets,
@@ -62,6 +64,12 @@ theme.maptheme <-
   theme(legend.text = element_text(size = 10)) +
   theme(panel.background = element_rect(fill = "#596673")) +
   theme(panel.grid = element_blank())
+
+# Create a dataframe to hold information about project timelines
+df.timeline_data <- data.frame(event = projects$ProjectName,
+                               start = as.Date(projects$StartDate), 
+                               end   = as.Date(projects$EndDate),
+                               group = "Projects")
 ```
 
 # Data View
@@ -193,37 +201,35 @@ plotlyOutput("geoData")
 ##################################################
 # Timeline view
 ##################################################
-timelineFilteredProjects <- reactive({
-  projects %>%
-    filter(StartDate >= input$projectStartRange[1]) %>%
-    filter(StartDate <= input$projectStartRange[2]) %>%
-    filter(EndDate >= input$projectEndRange[1]) %>%
-    filter(EndDate <= input$projectEndRange[2])
+
+# Filter by project start & end date
+df.timeline_data_react <- reactive({
+  df.timeline_data %>%
+    filter(start >= input$projectStartRange[1]) %>%
+    filter(start <= input$projectStartRange[2]) %>%
+    filter(end >= input$projectEndRange[1]) %>%
+    filter(end <= input$projectEndRange[2])
 })
 
-timelineData <- reactive({
-  data.frame(event = timelineFilteredProjects()$ProjectName,
-             start = as.Date(timelineFilteredProjects()$StartDate), 
-             end   = as.Date(timelineFilteredProjects()$EndDate),
-             group = "Projects")
-})
-
+# Render the timeline
 output$projectTimelines <- renderPlotly({
   vistime(
-    timelineData(),
+    df.timeline_data_react(),
     optimize_y = FALSE
-    )
+  )
 })
 
 ##################################################
 # Map view
 ##################################################
 
+# Filter by country
 df.geo_budget_react <- reactive({
   df.geo_budget %>%
     filter(Country %in% input$countrySelect)
 })
 
+# Render the map & budget data
 output$geoData <- renderPlotly({
   # Based on https://www.r-bloggers.com/2017/08/tidyverse-practice-mapping-large-european-cities/
   ggplot() +
