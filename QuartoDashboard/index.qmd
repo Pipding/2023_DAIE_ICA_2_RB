@@ -20,6 +20,9 @@ theme:
 library(RSQLite)
 library(vistime)
 library(plotly)
+library(europop)
+library(fuzzyjoin)
+library(stringdist)
 
 con <- dbConnect(drv=RSQLite::SQLite(), dbname="ICA_2023.sqlite")
 
@@ -33,6 +36,19 @@ SELECT
   CustomerCountry AS Country,
   Budget
 FROM Customers Join Projects P on Customers.CustomerID = P.CustomerID')
+
+map.europe <- map_data("world")
+df.euro_cities <- city_coords
+
+# Need to use fuzzy join because Rome is called Roma in the city_coords dataset
+df.geo_budget <- fuzzy_left_join(
+  customerCityBudgets,
+  df.euro_cities,
+  by = c("City" = "city"),
+  match_fun = list(function(x,y) stringdist(tolower(x),tolower(y)) < 2)
+  )
+
+df.geo_budget <- subset(df.geo_budget, select = -c(city) )
 ```
 
 # Data View
@@ -148,52 +164,7 @@ dateRangeInput(
 ```{r Total project spend mapped by customer city}
 #| title: Total project budget by location
 
-# Based on https://www.r-bloggers.com/2017/08/tidyverse-practice-mapping-large-european-cities/
-#map.europe <- map_data("world")
-#df.euro_cities <- city_coords
 
-# Need to use fuzzy join because Rome is called Roma in the city_coords dataset
-#d <- fuzzy_left_join(
-  #customerCityBudgets,
-  #df.euro_cities,
-  #by = c("City" = "city"),
-  #match_fun = list(function(x,y) stringdist(tolower(x),tolower(y)) < 2)
-  #)
-
-#theme.maptheeme <-
-  #theme(text = element_text(family = "Gill Sans", color = "#444444")) +
-  #theme(panel.grid = element_blank()) +
-  #theme(axis.text = element_blank()) +
-  #theme(axis.ticks = element_blank()) +
-  #theme(axis.title = element_blank()) +
-  #theme(legend.background = element_blank()) +
-  #theme(legend.key = element_blank()) +
-  #theme(legend.title = element_text(size = 18)) +
-  #theme(legend.text = element_text(size = 10)) +
-  #theme(panel.background = element_rect(fill = "#596673")) +
-  #theme(panel.grid = element_blank())
-
-#p <- ggplot() +
-  #geom_polygon(
-    #data = map.europe,
-    #aes(x = long, y = lat, group = group, text = " "),
-    #fill = "#DEDEDE",
-    #colour = "#818181",
-    #size = .15
-  #) +
-  #geom_point(
-    #data = d,
-    #aes(x = lon, y = lat, size = Budget, name = City),
-    #color = "red",
-    #alpha = .6
-  #) +
-  #coord_cartesian(xlim = c(-30,50), ylim = c(32,70)) +
-  #theme.maptheeme
-
-
-#ggplotly(p)
-
-# Experimental
 plotlyOutput("geoData")
 ```
 
@@ -201,10 +172,6 @@ plotlyOutput("geoData")
 
 ```{r}
 #| context: server
-
-library(europop)
-library(fuzzyjoin)
-library(stringdist)
 
 ##################################################
 # Timeline view
@@ -216,7 +183,6 @@ timelineFilteredProjects <- reactive({
     filter(EndDate >= input$projectEndRange[1]) %>%
     filter(EndDate <= input$projectEndRange[2])
 })
-
 
 timelineData <- reactive({
   data.frame(event = timelineFilteredProjects()$ProjectName,
@@ -235,44 +201,10 @@ output$projectTimelines <- renderPlotly({
 ##################################################
 # Map view
 ##################################################
-map.europe <- map_data("world")
-df.euro_cities <- city_coords
-
-# Need to use fuzzy join because Rome is called Roma in the city_coords dataset
-df.geo_budget <- fuzzy_left_join(
-  customerCityBudgets,
-  df.euro_cities,
-  by = c("City" = "city"),
-  match_fun = list(function(x,y) stringdist(tolower(x),tolower(y)) < 2)
-  )
-
-df.geo_budget <- subset(df.geo_budget, select = -c(city) )
 
 df.geo_budget_react <- reactive({
   df.geo_budget %>%
     filter(Country %in% input$countrySelect)
-})
-
-observeEvent(input$countrySelect, {
-  print(df.geo_budget)
-  print(input$countrySelect)
-  
-  flume <- df.geo_budget %>%
-    filter(Country %in% input$countrySelect)
-  
-  print(flume)
-})
-
-geoDataFiltered <- reactive({
-  df.geo_budget %>%
-    filter(Country %in% input$countrySelect)
-})
-
-geoDataRenderable <- reactive({
-  data.frame(City = geoDataFiltered()$City,
-             Budget = geoDataFiltered()$Budget,
-             lon = geoDataFiltered()$lon,
-             lat = geoDataFiltered()$lat)
 })
 
 output$geoData <- renderPlotly({
@@ -296,11 +228,11 @@ p <- ggplot() +
     aes(x = long, y = lat, group = group, text = " "),
     fill = "#DEDEDE",
     colour = "#818181",
-    size = .15 #TODO: linewidth
+    linewidth = .15
   ) +
   geom_point(
     data = df.geo_budget_react(),
-    aes(x = lon, y = lat, name = City, size = Budget), #TODO: paste City, Country
+    aes(x = lon, y = lat, name = City, size = Budget),
     color = "red",
     alpha = .6
   ) +
