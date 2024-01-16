@@ -113,7 +113,7 @@ Field 2: End date range
 # Input for the range of project start dates. Projects with start dates outside 
 # this range are not displayed
 dateRangeInput(
-  'projectStartRange',
+  'timeline_start_date_input',
   'Project start date range',
   start = min(projects$StartDate),
   end = max(projects$StartDate),
@@ -129,7 +129,7 @@ dateRangeInput(
 # Input for the range of project end dates. Projects with end dates outside 
 # this range are not displayed
 dateRangeInput(
-  'projectEndRange',
+  'timeline_end_date_input',
   'Project end date range',
   start = min(projects$EndDate),
   end = max(projects$EndDate),
@@ -163,26 +163,12 @@ Field 2: Min & max budget
 
 # Input which determines which countries to display data for
 checkboxGroupInput(
-  "countrySelect",
+  "map_country_input",
   "Countries",
   choices = sort(unique(df.geo_budget$Country)),
   selected = sort(unique(df.geo_budget$Country))[1], # For demo purposes, only select the first entry
   inline = FALSE,
   width = '100%'
-)
-
-dateRangeInput(
-  'projectEndRange',
-  'Project end date range',
-  start = min(projects$EndDate),
-  end = max(projects$EndDate),
-  min = min(projects$EndDate),
-  max = max(projects$EndDate),
-  format = "yyyy-mm-dd",
-  startview = "month",
-  weekstart = 0,
-  language = "en",
-  separator = " to "
 )
 
 ```
@@ -205,10 +191,10 @@ plotlyOutput("geoData")
 # Filter by project start & end date
 df.timeline_data_react <- reactive({
   df.timeline_data %>%
-    filter(start >= input$projectStartRange[1]) %>%
-    filter(start <= input$projectStartRange[2]) %>%
-    filter(end >= input$projectEndRange[1]) %>%
-    filter(end <= input$projectEndRange[2])
+    filter(start >= input$timeline_start_date_input[1]) %>%
+    filter(start <= input$timeline_start_date_input[2]) %>%
+    filter(end >= input$timeline_end_date_input[1]) %>%
+    filter(end <= input$timeline_end_date_input[2])
 })
 
 # Render the timeline
@@ -226,7 +212,7 @@ output$projectTimelines <- renderPlotly({
 # Filter by country
 df.geo_budget_react <- reactive({
   df.geo_budget %>%
-    filter(Country %in% input$countrySelect)
+    filter(Country %in% input$map_country_input)
 })
 
 # Render the map & budget data
