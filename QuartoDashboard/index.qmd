@@ -9,24 +9,12 @@ theme:
 ```{r}
 #| context: server-start
 
-# See https://quarto.org/docs/interactive/shiny/execution.html#context-server-start
-
-# In here we could add code (e.g., obtain a connection to a DB, read a CSV, download a ZIP from a remote source) that is run once and shared across multiple open sessions (i.e. multiple browser views of these pages that the user may open in Chrome/Edge)
-
-```
-
-```{r}
-#| context: setup
 library(RSQLite)
-library(vistime)
-library(plotly)
-library(europop)
-library(fuzzyjoin)
-library(stringdist)
 
+# Open connection to database
 con <- dbConnect(drv=RSQLite::SQLite(), dbname="ICA_2023.sqlite")
 
-
+# Acquire some data used in visualizations
 projects <- dbGetQuery(con,'SELECT * FROM Projects;')
 
 customerCityBudgets <- dbGetQuery(con, '
@@ -37,6 +25,16 @@ SELECT
   Budget
 FROM Customers Join Projects P on Customers.CustomerID = P.CustomerID')
 
+```
+
+```{r}
+#| context: setup
+library(vistime)
+library(plotly)
+library(europop)
+library(fuzzyjoin)
+library(stringdist)
+
 map.europe <- map_data("world")
 df.euro_cities <- city_coords
 
@@ -45,10 +43,25 @@ df.geo_budget <- fuzzy_left_join(
   customerCityBudgets,
   df.euro_cities,
   by = c("City" = "city"),
-  match_fun = list(function(x,y) stringdist(tolower(x),tolower(y)) < 2)
-  )
+  match_fun = list(function(x,y) stringdist(tolower(x),tolower(y)) < 2) # stringdist < 2 means words will match if less than 2 changes are needed to get from word x to word y. e.g. "car" would match "cat" because only 1 letter needs to change but "dog" would not match "bag" because that requires 2 changed letters
+)
 
+# The above fuzzy join results in duplicate columns, so we drop one
 df.geo_budget <- subset(df.geo_budget, select = -c(city) )
+
+# Theme for use in the map view. Adapted from the example on https://www.r-bloggers.com/2017/08/tidyverse-practice-mapping-large-european-cities/
+theme.maptheme <-
+  theme(text = element_text(family = "Gill Sans", color = "#444444")) +
+  theme(panel.grid = element_blank()) +
+  theme(axis.text = element_blank()) +
+  theme(axis.ticks = element_blank()) +
+  theme(axis.title = element_blank()) +
+  theme(legend.background = element_blank()) +
+  theme(legend.key = element_blank()) +
+  theme(legend.title = element_text(size = 18)) +
+  theme(legend.text = element_text(size = 10)) +
+  theme(panel.background = element_rect(fill = "#596673")) +
+  theme(panel.grid = element_blank())
 ```
 
 # Data View
@@ -56,30 +69,25 @@ df.geo_budget <- subset(df.geo_budget, select = -c(city) )
 ```{r}
 #| title: customers
 
-# Create a table with the DT package 
 datatable(head(customers))
-
 ```
 
 ```{r}
 #| title: projects
 
 datatable(head(projects))
-
 ```
 
 ```{r}
 #| title: developers
 
 datatable(head(developers))
-
 ```
 
 ```{r}
 #| title: assets
 
 datatable(head(assets))
-
 ```
 
 # Project Timelines
@@ -87,14 +95,15 @@ datatable(head(assets))
 <!--
 Plot 1: 
 Project timelines
-Field 1: Start date
-Field 2: End date
+Field 1: Start date range
+Field 2: End date range
 -->
 
 ```{r Date range inputs for project timelines plot}
 #| content: card-sidebar
 
-# These dateRangeInputs control the 
+# Input for the range of project start dates. Projects with start dates outside 
+# this range are not displayed
 dateRangeInput(
   'projectStartRange',
   'Project start date range',
@@ -109,6 +118,8 @@ dateRangeInput(
   separator = " to "
 )
 
+# Input for the range of project end dates. Projects with end dates outside 
+# this range are not displayed
 dateRangeInput(
   'projectEndRange',
   'Project end date range',
@@ -122,7 +133,6 @@ dateRangeInput(
   language = "en",
   separator = " to "
 )
-
 ```
 
 ```{r Plot project timelines}
@@ -133,14 +143,22 @@ plotlyOutput("projectTimelines")
 
 # Geographic spend
 
+<!--
+Plot 2: 
+Spend per country/city
+Field 1: Countries
+Field 2: Min & max budget
+-->
+
 ```{r Inputs for the geographic spend map}
 #| content: card-sidebar
 
+# Input which determines which countries to display data for
 checkboxGroupInput(
   "countrySelect",
   "Countries",
-  choices = c("UK", "Spain"),
-  selected = "UK",
+  choices = sort(unique(df.geo_budget$Country)),
+  selected = sort(unique(df.geo_budget$Country))[1], # For demo purposes, only select the first entry
   inline = FALSE,
   width = '100%'
 )
@@ -163,7 +181,6 @@ dateRangeInput(
 
 ```{r Total project spend mapped by customer city}
 #| title: Total project budget by location
-
 
 plotlyOutput("geoData")
 ```
@@ -209,34 +226,21 @@ df.geo_budget_react <- reactive({
 
 output$geoData <- renderPlotly({
   # Based on https://www.r-bloggers.com/2017/08/tidyverse-practice-mapping-large-european-cities/
-  theme.maptheeme <-
-  theme(text = element_text(family = "Gill Sans", color = "#444444")) +
-  theme(panel.grid = element_blank()) +
-  theme(axis.text = element_blank()) +
-  theme(axis.ticks = element_blank()) +
-  theme(axis.title = element_blank()) +
-  theme(legend.background = element_blank()) +
-  theme(legend.key = element_blank()) +
-  theme(legend.title = element_text(size = 18)) +
-  theme(legend.text = element_text(size = 10)) +
-  theme(panel.background = element_rect(fill = "#596673")) +
-  theme(panel.grid = element_blank())
-
-p <- ggplot() +
-  geom_polygon(
-    data = map.europe,
-    aes(x = long, y = lat, group = group, text = " "),
-    fill = "#DEDEDE",
-    colour = "#818181",
-    linewidth = .15
-  ) +
-  geom_point(
-    data = df.geo_budget_react(),
-    aes(x = lon, y = lat, name = City, size = Budget),
-    color = "red",
-    alpha = .6
-  ) +
-  coord_cartesian(xlim = c(-30,50), ylim = c(32,70)) +
-  theme.maptheeme
+  ggplot() +
+    geom_polygon(
+      data = map.europe,
+      aes(x = long, y = lat, group = group, text = " "),
+      fill = "#DEDEDE",
+      colour = "#818181",
+      linewidth = .15
+    ) +
+    geom_point(
+      data = df.geo_budget_react(),
+      aes(x = lon, y = lat, name = City, size = Budget),
+      color = "red",
+      alpha = .6
+    ) +
+    coord_cartesian(xlim = c(-30,50), ylim = c(32,70)) +
+    theme.maptheme
 })
 ```
