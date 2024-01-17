@@ -171,6 +171,14 @@ checkboxGroupInput(
   width = '100%'
 )
 
+sliderInput(
+  "map_budget_input",
+  "Budget range",
+  value = c(min(df.geo_budget$Budget), max(df.geo_budget$Budget)),
+  min = min(df.geo_budget$Budget),
+  max = max(df.geo_budget$Budget)
+)
+
 ```
 
 ```{r Total project spend mapped by customer city}
@@ -212,7 +220,9 @@ output$projectTimelines <- renderPlotly({
 # Filter by country
 df.geo_budget_react <- reactive({
   df.geo_budget %>%
-    filter(Country %in% input$map_country_input)
+    filter(Country %in% input$map_country_input) %>%
+    filter(Budget >= input$map_budget_input[1]) %>%
+    filter(Budget <= input$map_budget_input[2])
 })
 
 # Render the map & budget data

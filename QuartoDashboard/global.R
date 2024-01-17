@@ -1,4 +1,4 @@
-# install and load the DT package for nice tables with pagination and search
+# Install packages
 if (!requireNamespace("DT")) 
   install.packages("DT")
 library(DT)
@@ -35,6 +35,8 @@ library(fuzzyjoin)
 if (!requireNamespace("stringdist")) 
   install.packages("stringdist")
 library(stringdist)
+
+# TODO: This should probably be moved to run on server start
 
 con <- dbConnect(drv=RSQLite::SQLite(), dbname="ICA_2023.sqlite")
 
