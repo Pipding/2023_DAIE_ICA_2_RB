@@ -74,6 +74,8 @@ df.timeline_data <- data.frame(event = projects$ProjectName,
 
 # Data View
 
+## Column
+
 ```{r}
 #| title: customers
 
@@ -85,6 +87,8 @@ datatable(head(customers))
 
 datatable(head(projects))
 ```
+
+## Column
 
 ```{r}
 #| title: developers
