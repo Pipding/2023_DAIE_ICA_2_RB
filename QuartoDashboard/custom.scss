@@ -10,7 +10,12 @@
   width: 90%;
 }
 
-/* Flex causes options to be equally spaced out by default and it looks silly */
-#map_country_input {
+/* Flex causes options to weirdly spaced out by default */
+#map_country_input, #card-6-card-sidebar > div > div:nth-child(1) {
   flex: none;
+}
+
+/* This is  the budget slider, which by default is too far left to render correctly */
+#card-6-card-sidebar > div > div:nth-child(2) > div {
+  padding-left: 8%;
 }
