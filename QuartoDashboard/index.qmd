@@ -166,11 +166,12 @@ checkboxGroupInput(
   "map_country_input",
   "Countries",
   choices = sort(unique(df.geo_budget$Country)),
-  selected = sort(unique(df.geo_budget$Country))[1], # For demo purposes, only select the first entry
+  selected = sort(unique(df.geo_budget$Country))[c(FALSE, TRUE)], # For demo purposes, select every other checkbox by default. Found this trick here https://stackoverflow.com/a/13462110
   inline = FALSE,
   width = '100%'
 )
 
+# Input for controlling what range of project budgets should be displayed
 sliderInput(
   "map_budget_input",
   "Budget range",
